@@ -39,7 +39,7 @@ public class GameManagerScr : MonoBehaviour
     public Game CurrentGame;
     public Transform EnemyHand, PlayerHand, EnemyField1, EnemyField2, EnemyField3, EnemyField4, EnemyField5, PlayerField1, PlayerField2, PlayerField3, PlayerField4, PlayerField5;
     public GameObject CardPref;
-    int Turn, TurnTime = 60;
+    int Turn, TurnTime = 30;
     public TextMeshProUGUI TurnTimeTxt;
     public Button EndTurnBtn;
     public List<CardInfoScr> PlayerHandCards = new List<CardInfoScr>(),
