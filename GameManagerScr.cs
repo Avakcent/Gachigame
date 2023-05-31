@@ -4,32 +4,33 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.Android;
+using UnityEngine.UIElements;
+using System.Linq;
 
 public class Game
 {
-    public List<Card> EnemyDeck, PlayerDeckSlaves, PlayerDeckMasters;
+    public List<Card> EnemyDeck, PlayerDeck;
     public Game()
     {
-        EnemyDeck = GiveDeckCard();
-        PlayerDeckSlaves = GiveDeckCard();
-        PlayerDeckMasters = GiveDeckMasterCard();
+        EnemyDeck = GiveDeckNATOCards();
+        PlayerDeck = GiveDeckOWDCards();
 
     }
-    List<Card> GiveDeckCard()
+    List<Card> GiveDeckOWDCards()
     {
         List<Card> list = new List<Card>();
         for (int i = 0; i < 10; i++)
         {
-            list.Add(CardManager.AllCards[Random.Range(0, CardManager.AllCards.Count)]);
+            list.Add(CardManager.OWDCards[Random.Range(0, CardManager.OWDCards.Count)]);
         }
         return list;
     }
-    List<Card> GiveDeckMasterCard()
+    List<Card> GiveDeckNATOCards()
     {
         List<Card> list = new List<Card>();
         for (int i = 0; i < 10; i++)
         {
-            list.Add(CardManager.MasterCards[Random.Range(0, CardManager.MasterCards.Count)]);
+            list.Add(CardManager.NATOCards[Random.Range(0, CardManager.NATOCards.Count)]);
         }
         return list;
     }
@@ -37,15 +38,18 @@ public class Game
 public class GameManagerScr : MonoBehaviour
 {
     public Game CurrentGame;
-    public Transform EnemyHand, PlayerHand, EnemyField1, EnemyField2, EnemyField3, EnemyField4, EnemyField5, PlayerField1, PlayerField2, PlayerField3, PlayerField4, PlayerField5;
+    public Transform Line1, Line2, Line3, Line4;
+    public Transform EnemyHand, PlayerHand;
+    public Transform CP00, CP01, CP02, CP03, CP04, CP10, CP11, CP12, CP13, CP14, CP20, CP21, CP22, CP23, CP24, CP30, CP31, CP32, CP33, CP34;
     public GameObject CardPref;
     int Turn, TurnTime = 30;
     public TextMeshProUGUI TurnTimeTxt;
-    public Button EndTurnBtn;
+    public UnityEngine.UI.Button EndTurnBtn;
     public List<CardInfoScr> PlayerHandCards = new List<CardInfoScr>(),
         PlayerFieldCards = new List<CardInfoScr>(),
         EnemyHandCards = new List<CardInfoScr>(),
         EnemyFieldCards = new List<CardInfoScr>();
+    CardInfoScr Card_Info;
     public bool IsPlayerTurn { get => Turn%2==0; }
 
     void Start()
@@ -53,7 +57,7 @@ public class GameManagerScr : MonoBehaviour
         Turn = 0;
         CurrentGame = new Game();
         GiveHandCards(CurrentGame.EnemyDeck, EnemyHand);
-        GiveHandCards(CurrentGame.PlayerDeckSlaves, PlayerHand);
+        GiveHandCards(CurrentGame.PlayerDeck, PlayerHand);
         StartCoroutine(TurnFunc());
     }
     void GiveHandCards(List<Card> deck, Transform hand)
@@ -76,8 +80,9 @@ public class GameManagerScr : MonoBehaviour
 
         else
         {
-            cardGO.GetComponent<CardInfoScr>().ShowCardInfo(card);
+            cardGO.GetComponent<CardInfoScr>().ShowCardInfo(card, true);
             PlayerHandCards.Add(cardGO.GetComponent<CardInfoScr>());
+            cardGO.GetComponent<AttackedCardScr>().enabled = false;
         }
         deck.RemoveAt(0);
     }
@@ -86,8 +91,17 @@ public class GameManagerScr : MonoBehaviour
     {
         TurnTime = 30;
         TurnTimeTxt.text = TurnTime.ToString();
+        foreach (var card in PlayerFieldCards)
+        {
+            if (card) card.DeHLCard();
+        }
         if (IsPlayerTurn)
         {
+            foreach (var card in PlayerFieldCards)
+            { 
+                card.SelfCard.AttackState(true);
+                if (card) card.HLCard();
+            }
             while (TurnTime-- > 0)
             {
                 TurnTimeTxt.text = TurnTime.ToString();
@@ -96,6 +110,10 @@ public class GameManagerScr : MonoBehaviour
         }
         else
         {
+            foreach (var card in EnemyFieldCards)
+            {
+                card.SelfCard.AttackState(true);
+            }
             while (TurnTime-- > 27)
             {
                 TurnTimeTxt.text = TurnTime.ToString();
@@ -108,19 +126,25 @@ public class GameManagerScr : MonoBehaviour
     }
     void EnemyTurn(List<CardInfoScr> cards)
     {
-        int count = Random.Range(0, cards.Count), place=Random.Range(1, 5);
-        for (int i = 0; i < 1; i++) 
-        {
-            cards[0].ShowCardInfo(cards[0].SelfCard);
-            
-            if (place == 1) cards[0].transform.SetParent(EnemyField1);
-            if (place == 2) cards[0].transform.SetParent(EnemyField2);
-            if (place == 3) cards[0].transform.SetParent(EnemyField3);
-            if (place == 4) cards[0].transform.SetParent(EnemyField4);
-            if (place == 5) cards[0].transform.SetParent(EnemyField5);
-            EnemyFieldCards.Add(cards[0]);
-            EnemyHandCards.Remove(cards[0]);
-        }
+        int count = 3, place;
+        bool f11=false;
+        for (int i = 0; i <= count; i++)
+            {
+                place = Random.Range(1, 5);
+                f11 = false;
+                if (EnemyHandCards.Count == 0) break;
+                if (place == 1 && CP00.transform.childCount == 0) { cards[0].transform.SetParent(CP00.transform); f11 = true; }
+                else if (place == 2 && CP01.transform.childCount == 0) { cards[0].transform.SetParent(CP01.transform); f11 = true; }
+                else if (place == 3 && CP02.transform.childCount == 0) { cards[0].transform.SetParent(CP02.transform); f11 = true; }
+                else if (place == 4 && CP03.transform.childCount == 0) { cards[0].transform.SetParent(CP03.transform); f11 = true; }
+                else if (place == 5 && CP04.transform.childCount == 0) { cards[0].transform.SetParent(CP04.transform); f11 = true; }
+                if (f11 == true)
+                {
+                    cards[0].ShowCardInfo(cards[0].SelfCard, false);
+                    EnemyFieldCards.Add(cards[0]);
+                    EnemyHandCards.Remove(cards[0]);
+                }
+            }
     }
     public void ChangeTurn() 
     {
@@ -134,6 +158,22 @@ public class GameManagerScr : MonoBehaviour
     void GiveNewCards() 
     {
         if (EnemyHandCards.Count<7) GiveCardToHand(CurrentGame.EnemyDeck, EnemyHand);
-        if (PlayerHandCards.Count < 7) GiveCardToHand(CurrentGame.PlayerDeckSlaves, PlayerHand);
+        if (PlayerHandCards.Count < 7) GiveCardToHand(CurrentGame.PlayerDeck, PlayerHand);
+    }
+    public void CardsFight(CardInfoScr playerCard, CardInfoScr enemyCard)
+    {
+        playerCard.SelfCard.GetDamage(enemyCard.SelfCard.Attack);
+        enemyCard.SelfCard.GetDamage(playerCard.SelfCard.Attack);
+        if (!enemyCard.SelfCard.IsAlive) DestroyCard(enemyCard);
+        else enemyCard.RefreshData();
+        if (!playerCard.SelfCard.IsAlive) DestroyCard(playerCard);
+        else playerCard.RefreshData();
+    }
+    public void DestroyCard(CardInfoScr card)
+    {
+        card.GetComponent<CardMovementScr>().OnEndDrag(null);
+        if (EnemyFieldCards.Exists(x=>x==card)) EnemyFieldCards.Remove(card);
+        if (PlayerFieldCards.Exists(x=>x==card)) PlayerFieldCards.Remove(card);
+        Destroy(card.gameObject);
     }
 }
